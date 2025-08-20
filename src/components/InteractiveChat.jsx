@@ -49,19 +49,34 @@ const InteractiveChat = () => {
       ]
     },
     {
-      type: 'success',
-      message: "Based on your answers, you may qualify for compensation! Please provide your contact information and we'll follow up with more details.",
+      type: 'question',
+      message: "Have you already hired a lawyer for this case?",
+      controls: [
+        { type: 'button', label: 'Yes', value: 'already-lawyer' },
+        { type: 'button', label: 'No', value: 'no-lawyer' }
+      ]
+    },
+    {
+      type: 'message',
+      message: "Based on your answers, you may qualify! Let’s get your contact details so our legal team can review your case.",
+      controls: [
+        { type: 'button', label: 'Continue', value: 'continue' }
+      ]
+    },
+    {
+      type: 'form',
+      message: "Please provide your contact information:",
       fields: [
         { type: 'text', name: 'name', label: 'Full Name', required: true },
-        { type: 'email', name: 'email', label: 'Email Address', required: true },
         { type: 'tel', name: 'phone', label: 'Phone Number', required: true },
+        { type: 'email', name: 'email', label: 'Email Address', required: true },
         { type: 'text', name: 'zip', label: 'Zip Code', required: true },
         { type: 'checkbox', name: 'agree', label: 'I agree to be contacted and provide my consent for audio/video verification if needed', required: true }
       ]
     },
     {
       type: 'failure',
-      message: "Based on your answers, it doesn't appear you qualify at this time. If your situation changes, please check back with us. Thank you for your time."
+      message: "It looks like you may already be represented, so we cannot proceed."
     }
   ];
 
@@ -83,23 +98,47 @@ const InteractiveChat = () => {
     if (stepType === 'question') {
       setUserResponses({ ...userResponses, [currentStep]: value });
 
-      if (currentStep === 1 && value === 'no') setCurrentStep(6); // failure
-      else if (currentStep === 4 && value === 'yes') setCurrentStep(6); // failure
-      else if (currentStep < 4) setCurrentStep(currentStep + 1);
-      else setCurrentStep(5); // success
+      // Branching logic
+      if (currentStep === 1 && value === 'no') {
+        return setCurrentStep(chatSteps.findIndex(s => s.type === 'failure'));
+      }
+      if (currentStep === 3 && value === 'undiagnosed') {
+        // Restart if "No official diagnosis"
+        setUserResponses({});
+        setInputError('');
+        return setCurrentStep(0);
+      }
+      if (currentStep === 4 && value === 'yes') {
+        return setCurrentStep(chatSteps.findIndex(s => s.type === 'failure'));
+      }
+      if (currentStep === 5 && value === 'already-lawyer') {
+        return setCurrentStep(chatSteps.findIndex(s => s.type === 'failure'));
+      }
+      if (currentStep === 5 && value === 'no-lawyer') {
+        return setCurrentStep(6); // go to eligibility result
+      }
+
+      setCurrentStep(currentStep + 1);
+    }
+
+    if (stepType === 'message' && value === 'continue') {
+      setCurrentStep(7); // go to form
     }
   };
 
   // Form input change
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setUserResponses({ ...userResponses, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setUserResponses({
+      ...userResponses,
+      [name]: type === 'checkbox' ? checked : value
+    });
     if (inputError) setInputError('');
   };
 
   // Submit form
   const handleFormSubmit = () => {
-    const currentFields = chatSteps[5].fields;
+    const currentFields = chatSteps[7].fields;
     const emptyField = currentFields.find((field) => {
       if (field.type === 'checkbox') {
         return field.required && !userResponses[field.name];
@@ -107,7 +146,11 @@ const InteractiveChat = () => {
       return field.required && !userResponses[field.name];
     });
     if (emptyField) {
-      setInputError(`Please fill in the ${emptyField.label} field`);
+      setInputError(
+        emptyField.type === "checkbox"
+          ? `Please check "${emptyField.label}"`
+          : `Please enter ${emptyField.label}`
+      );
       return;
     }
     alert('Thank you for your information! We will be in touch soon.');
@@ -118,10 +161,10 @@ const InteractiveChat = () => {
     const step = chatSteps[currentStep];
     if (!step || isTyping) return null;
 
-    if (step.type === 'welcome' || step.type === 'question') {
+    if (step.type === 'welcome' || step.type === 'question' || step.type === 'message') {
       return (
         <div className="flex flex-wrap gap-3 mt-4">
-          {step.controls.map((control, index) => (
+          {step.controls?.map((control, index) => (
             <motion.button
               key={index}
               whileHover={{ scale: 1.05 }}
@@ -136,13 +179,13 @@ const InteractiveChat = () => {
       );
     }
 
-    if (step.type === 'success') {
+    if (step.type === 'form') {
       return (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className=" space-y-4 "
+          className="space-y-4"
         >
           {step.fields.map((field, index) => (
             <div key={index}>
@@ -155,7 +198,7 @@ const InteractiveChat = () => {
                   name={field.name}
                   className="mr-2"
                   checked={!!userResponses[field.name]}
-                  onChange={e => setUserResponses({ ...userResponses, [field.name]: e.target.checked })}
+                  onChange={handleInputChange}
                   required={field.required}
                 />
               ) : (
@@ -192,6 +235,7 @@ const InteractiveChat = () => {
           onClick={() => {
             setCurrentStep(0);
             setUserResponses({});
+            setInputError('');
           }}
         >
           Start Over
@@ -204,14 +248,14 @@ const InteractiveChat = () => {
   return (
     <div className="w-full max-w-lg mx-auto p-2 px-4 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-[1rem] shadow-lg flex flex-col h-full">
       {/* Progress */}
-      {currentStep > 0 && currentStep <= 4 && (
+      {currentStep > 0 && currentStep <= 5 && (
         <>
-          <div className="text-sm text-gray-500 mb-2">Step {currentStep} of 4</div>
+          <div className="text-sm text-gray-500 mb-2">Step {currentStep} of 5</div>
           <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
             <motion.div
               className="bg-blue-600 h-2 rounded-full"
               initial={{ width: 0 }}
-              animate={{ width: `${(currentStep / 4) * 100}%` }}
+              animate={{ width: `${(currentStep / 5) * 100}%` }}
               transition={{ duration: 0.5 }}
             />
           </div>
