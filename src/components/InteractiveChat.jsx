@@ -142,11 +142,11 @@ const InteractiveChat = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className=" space-y-4"
+          className=" space-y-4 "
         >
           {step.fields.map((field, index) => (
             <div key={index}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-0 ">
                 {field.label} {field.required && <span className="text-red-500">*</span>}
               </label>
               {field.type === 'checkbox' ? (
@@ -174,7 +174,7 @@ const InteractiveChat = () => {
           <motion.button
             whileHover={{ scale: 0.97 }}
             whileTap={{ scale: 0.93 }}
-            className="w-full py-3 bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white rounded-2xl shadow-lg hover:from-green-500 hover:to-green-700 transition-all md:mt-6"
+            className="w-full py-3 bg-gradient-to-r from-blue-500 via-blue-500 to-blue-600 text-white rounded-2xl shadow-lg hover:from-sky-500 hover:to-blue-600 transition-all mt-4 md:mt-10 pb-3"
             onClick={handleFormSubmit}
           >
             Submit Information
