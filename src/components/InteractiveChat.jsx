@@ -5,7 +5,6 @@ const InteractiveChat = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
   const [userResponses, setUserResponses] = useState({});
-  const [inputValue, setInputValue] = useState('');
   const [inputError, setInputError] = useState('');
 
   // Chat flow configuration
@@ -64,99 +63,65 @@ const InteractiveChat = () => {
     }
   ];
 
-  // Simulate typing animation
+  // Typing effect
   useEffect(() => {
     if (currentStep >= chatSteps.length) return;
-    
     setIsTyping(true);
-    const timer = setTimeout(() => {
-      setIsTyping(false);
-    }, 1200);
-
+    const timer = setTimeout(() => setIsTyping(false), 1200);
     return () => clearTimeout(timer);
   }, [currentStep]);
 
-  // Handle user response
+  // Handle responses
   const handleResponse = (value, stepType) => {
     if (stepType === 'welcome' && value === 'start') {
       setCurrentStep(1);
       return;
     }
 
-    // For questions, store response and move to next step
     if (stepType === 'question') {
-      setUserResponses({...userResponses, [currentStep]: value});
-      
-      // Simple qualification logic
-      if (currentStep === 1 && value === 'no') {
-        setCurrentStep(6); // Jump to failure
-      } else if (currentStep === 4 && value === 'yes') {
-        setCurrentStep(6); // Jump to failure if already have lawyer
-      } else if (currentStep < 4) {
-        setCurrentStep(currentStep + 1);
-      } else {
-        setCurrentStep(5); // Success step
-      }
+      setUserResponses({ ...userResponses, [currentStep]: value });
+
+      if (currentStep === 1 && value === 'no') setCurrentStep(6); // failure
+      else if (currentStep === 4 && value === 'yes') setCurrentStep(6); // failure
+      else if (currentStep < 4) setCurrentStep(currentStep + 1);
+      else setCurrentStep(5); // success
     }
   };
 
-  // Handle form input change
+  // Form input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setInputValue(value);
-    
-    // Clear previous errors
+    setUserResponses({ ...userResponses, [name]: value });
     if (inputError) setInputError('');
-    
-    // Validation for specific field types
-    if (name === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        setInputError('Please enter a valid email address');
-      }
-    } else if (name === 'phone') {
-      const phoneRegex = /^(\+\d{1,2}\s)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
-      if (!phoneRegex.test(value)) {
-        setInputError('Please enter a valid phone number');
-      }
-    }
   };
 
-  // Handle form submission
+  // Submit form
   const handleFormSubmit = () => {
-    // Validate all required fields
     const currentFields = chatSteps[5].fields;
-    const emptyField = currentFields.find(field => 
-      field.required && !userResponses[field.name]
+    const emptyField = currentFields.find(
+      (field) => field.required && !userResponses[field.name]
     );
-    
     if (emptyField) {
       setInputError(`Please fill in the ${emptyField.label} field`);
       return;
     }
-    
-    if (inputError) return;
-    
-    // In a real application, you would submit the data to a server here
     alert('Thank you for your information! We will be in touch soon.');
-    // Reset the form or redirect
   };
 
-  // Render appropriate controls based on step type
+  // Controls UI
   const renderControls = () => {
     const step = chatSteps[currentStep];
-    
     if (!step || isTyping) return null;
-    
+
     if (step.type === 'welcome' || step.type === 'question') {
       return (
-        <div className="flex flex-wrap gap-2 mt-4">
+        <div className="flex flex-wrap gap-3 mt-4">
           {step.controls.map((control, index) => (
             <motion.button
               key={index}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors"
+              className="px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
               onClick={() => handleResponse(control.value, step.type)}
             >
               {control.label}
@@ -165,38 +130,30 @@ const InteractiveChat = () => {
         </div>
       );
     }
-    
+
     if (step.type === 'success') {
       return (
-        <div className="mt-4 space-y-4">
+        <div className="mt-6 space-y-4">
           {step.fields.map((field, index) => (
             <div key={index}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {field.label}
-                {field.required && <span className="text-red-500">*</span>}
+                {field.label} {field.required && <span className="text-red-500">*</span>}
               </label>
               <input
                 type={field.type}
                 name={field.name}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 value={userResponses[field.name] || ''}
-                onChange={(e) => {
-                  setUserResponses({...userResponses, [field.name]: e.target.value});
-                  handleInputChange(e);
-                }}
+                onChange={handleInputChange}
                 required={field.required}
               />
             </div>
           ))}
-          
-          {inputError && (
-            <div className="text-red-500 text-sm mt-2">{inputError}</div>
-          )}
-          
+          {inputError && <p className="text-red-500 text-sm">{inputError}</p>}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-full px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors mt-4"
+            className="w-full py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700"
             onClick={handleFormSubmit}
           >
             Submit Information
@@ -204,13 +161,13 @@ const InteractiveChat = () => {
         </div>
       );
     }
-    
+
     if (step.type === 'failure') {
       return (
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors mt-4"
+          className="px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 mt-4"
           onClick={() => {
             setCurrentStep(0);
             setUserResponses({});
@@ -220,33 +177,28 @@ const InteractiveChat = () => {
         </motion.button>
       );
     }
-    
     return null;
   };
 
   return (
-    <div className="max-w-md mx-auto p-4  bg-white rounded-xl shadow-lg">
-      {/* Progress indicator */}
+    <div className="w-full max-w-lg mx-auto p-2 px-4 bg-white rounded-2xl shadow-xl flex flex-col h-full">
+      {/* Progress */}
       {currentStep > 0 && currentStep <= 4 && (
-        <div className="text-sm text-gray-500 mb-2">
-          Step {currentStep} of 4
-        </div>
+        <>
+          <div className="text-sm text-gray-500 mb-2">Step {currentStep} of 4</div>
+          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+            <motion.div
+              className="bg-blue-600 h-2 rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${(currentStep / 4) * 100}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+        </>
       )}
-      
-      {/* Progress bar */}
-      {currentStep > 0 && currentStep <= 4 && (
-        <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
-          <motion.div 
-            className="bg-blue-600 h-1.5 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${(currentStep / 4) * 100}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
-      )}
-      
-      {/* Chat area */}
-      <div className="mb-6">
+
+      {/* Chat messages */}
+      <div className="flex-1 overflow-y-auto pr-1 mb-4 space-y-4">
         <AnimatePresence>
           {currentStep < chatSteps.length && (
             <motion.div
@@ -255,19 +207,15 @@ const InteractiveChat = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="flex mb-4"
+              className="flex items-start"
             >
-              <div className="flex-shrink-0 mr-2">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
-                  B
-                </div>
-              </div>
-              <div className="bg-gray-100 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[80%]">
+              <div className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-full mr-3">B</div>
+              <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-tl-none shadow max-w-[80%]">
                 {isTyping ? (
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-400" />
                   </div>
                 ) : (
                   <p>{chatSteps[currentStep].message}</p>
@@ -276,26 +224,23 @@ const InteractiveChat = () => {
             </motion.div>
           )}
         </AnimatePresence>
-        
-        {/* User responses */}
+
         {Object.entries(userResponses).map(([step, response]) => (
-          <motion.div 
-            key={step} 
+          <motion.div
+            key={step}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex justify-end mb-4"
+            className="flex justify-end"
           >
-            <div className="bg-blue-100 p-4 rounded-2xl rounded-tr-none shadow-sm max-w-[80%]">
+            <div className="bg-blue-100 px-4 py-3 rounded-2xl rounded-tr-none shadow max-w-[80%]">
               {response}
             </div>
           </motion.div>
         ))}
       </div>
-      
+
       {/* Controls */}
-      <div className="mt-4">
-        {renderControls()}
-      </div>
+      <div>{renderControls()}</div>
     </div>
   );
 };

@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+
+#bg-video {
+  position: fixed;      /* Stays fixed behind all content */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;    /* Makes video fill the screen */
+  z-index: -1;          /* Push behind all elements */
+  pointer-events: none; /* Prevents clicks blocking content */
+}
