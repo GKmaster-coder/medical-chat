@@ -52,9 +52,11 @@ const InteractiveChat = () => {
       type: 'success',
       message: "Based on your answers, you may qualify for compensation! Please provide your contact information and we'll follow up with more details.",
       fields: [
-        { type: 'text', name: 'name', label: 'Full Name', required: true },
-        { type: 'email', name: 'email', label: 'Email Address', required: true },
-        { type: 'tel', name: 'phone', label: 'Phone Number', required: true }
+  { type: 'text', name: 'name', label: 'Full Name', required: true },
+  { type: 'email', name: 'email', label: 'Email Address', required: true },
+  { type: 'tel', name: 'phone', label: 'Phone Number', required: true },
+  { type: 'text', name: 'zip', label: 'Zip Code', required: true },
+  { type: 'checkbox', name: 'agree', label: 'I agree to be contacted and provide my consent for audio/video verification if needed', required: true }
       ]
     },
     {
@@ -98,9 +100,12 @@ const InteractiveChat = () => {
   // Submit form
   const handleFormSubmit = () => {
     const currentFields = chatSteps[5].fields;
-    const emptyField = currentFields.find(
-      (field) => field.required && !userResponses[field.name]
-    );
+    const emptyField = currentFields.find((field) => {
+      if (field.type === 'checkbox') {
+        return field.required && !userResponses[field.name];
+      }
+      return field.required && !userResponses[field.name];
+    });
     if (emptyField) {
       setInputError(`Please fill in the ${emptyField.label} field`);
       return;
@@ -133,32 +138,48 @@ const InteractiveChat = () => {
 
     if (step.type === 'success') {
       return (
-        <div className="mt-6 space-y-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          className="mt-6 space-y-4"
+        >
           {step.fields.map((field, index) => (
             <div key={index}>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {field.label} {field.required && <span className="text-red-500">*</span>}
               </label>
-              <input
-                type={field.type}
-                name={field.name}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                value={userResponses[field.name] || ''}
-                onChange={handleInputChange}
-                required={field.required}
-              />
+              {field.type === 'checkbox' ? (
+                <input
+                  type="checkbox"
+                  name={field.name}
+                  className="mr-2"
+                  checked={!!userResponses[field.name]}
+                  onChange={e => setUserResponses({ ...userResponses, [field.name]: e.target.checked })}
+                  required={field.required}
+                />
+              ) : (
+                <input
+                  type={field.type}
+                  name={field.name}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  value={userResponses[field.name] || ''}
+                  onChange={handleInputChange}
+                  required={field.required}
+                />
+              )}
             </div>
           ))}
           {inputError && <p className="text-red-500 text-sm">{inputError}</p>}
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700"
+            whileHover={{ scale: 0.97 }}
+            whileTap={{ scale: 0.93 }}
+            className="w-full py-3 bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white rounded-2xl shadow-lg hover:from-green-500 hover:to-green-700 transition-all"
             onClick={handleFormSubmit}
           >
             Submit Information
           </motion.button>
-        </div>
+        </motion.div>
       );
     }
 
@@ -181,7 +202,7 @@ const InteractiveChat = () => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-2 px-4 bg-white rounded-2xl shadow-xl flex flex-col h-full">
+  <div className="w-full max-w-lg mx-auto p-2 px-4 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-[1rem] shadow-lg flex flex-col h-full">
       {/* Progress */}
       {currentStep > 0 && currentStep <= 4 && (
         <>
