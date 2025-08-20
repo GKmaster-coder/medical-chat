@@ -6,7 +6,7 @@ const Header = () => {
     <header className="w-full bg-white shadow-lg border-b border-gray-200 py-4 px-6 flex flex-col md:flex-row items-center md:justify-between">
       {/* Center: Lawsuit Name + Subheadline */}
       <div className="text-center md:text-left max-w-2xl">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-extrabold text-blue-900 tracking-tight">
           AFFF Foam Cancer Lawsuit – Check Eligibility
         </h1>
         <p className="mt-2 text-gray-600 text-sm md:text-base leading-relaxed">

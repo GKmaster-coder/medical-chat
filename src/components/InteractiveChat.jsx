@@ -230,7 +230,14 @@ const InteractiveChat = () => {
               transition={{ duration: 0.3 }}
               className="flex items-start"
             >
-              <div className="w-8 h-8 flex items-center justify-center bg-blue-500 text-white rounded-full mr-3">B</div>
+              <div className="w-10 h-10 flex items-center justify-center bg-blue-500 rounded-full mr-3 overflow-hidden">
+  <img 
+    src="/avtar.png" 
+    alt="icon" 
+    className="w-full h-full object-cover" 
+  />
+</div>
+
               <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-tl-none shadow max-w-[80%]">
                 {isTyping ? (
                   <div className="flex space-x-1">
