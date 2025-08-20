@@ -52,11 +52,11 @@ const InteractiveChat = () => {
       type: 'success',
       message: "Based on your answers, you may qualify for compensation! Please provide your contact information and we'll follow up with more details.",
       fields: [
-  { type: 'text', name: 'name', label: 'Full Name', required: true },
-  { type: 'email', name: 'email', label: 'Email Address', required: true },
-  { type: 'tel', name: 'phone', label: 'Phone Number', required: true },
-  { type: 'text', name: 'zip', label: 'Zip Code', required: true },
-  { type: 'checkbox', name: 'agree', label: 'I agree to be contacted and provide my consent for audio/video verification if needed', required: true }
+        { type: 'text', name: 'name', label: 'Full Name', required: true },
+        { type: 'email', name: 'email', label: 'Email Address', required: true },
+        { type: 'tel', name: 'phone', label: 'Phone Number', required: true },
+        { type: 'text', name: 'zip', label: 'Zip Code', required: true },
+        { type: 'checkbox', name: 'agree', label: 'I agree to be contacted and provide my consent for audio/video verification if needed', required: true }
       ]
     },
     {
@@ -142,7 +142,7 @@ const InteractiveChat = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="mt-6 space-y-4"
+          className=" space-y-4"
         >
           {step.fields.map((field, index) => (
             <div key={index}>
@@ -174,7 +174,7 @@ const InteractiveChat = () => {
           <motion.button
             whileHover={{ scale: 0.97 }}
             whileTap={{ scale: 0.93 }}
-            className="w-full py-3 bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white rounded-2xl shadow-lg hover:from-green-500 hover:to-green-700 transition-all"
+            className="w-full py-3 bg-gradient-to-r from-green-400 via-green-500 to-green-600 text-white rounded-2xl shadow-lg hover:from-green-500 hover:to-green-700 transition-all md:mt-6"
             onClick={handleFormSubmit}
           >
             Submit Information
@@ -202,7 +202,7 @@ const InteractiveChat = () => {
   };
 
   return (
-  <div className="w-full max-w-lg mx-auto p-2 px-4 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-[1rem] shadow-lg flex flex-col h-full">
+    <div className="w-full max-w-lg mx-auto p-2 px-4 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-[1rem] shadow-lg flex flex-col h-full">
       {/* Progress */}
       {currentStep > 0 && currentStep <= 4 && (
         <>
@@ -231,12 +231,12 @@ const InteractiveChat = () => {
               className="flex items-start"
             >
               <div className="w-10 h-10 flex items-center justify-center bg-blue-500 rounded-full mr-3 overflow-hidden">
-  <img 
-    src="/avtar.png" 
-    alt="icon" 
-    className="w-full h-full object-cover" 
-  />
-</div>
+                <img
+                  src="/avtar.png"
+                  alt="icon"
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
               <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-tl-none shadow max-w-[80%]">
                 {isTyping ? (
