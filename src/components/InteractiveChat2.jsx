@@ -83,29 +83,28 @@ const InteractiveChat2 = () => {
     }
   ];
 
-  // Typing effect
+  // Typing effect & bot message appending
   useEffect(() => {
     if (currentStep >= chatSteps.length) return;
     setIsTyping(true);
-    const timer = setTimeout(() => setIsTyping(false), 1200);
-    return () => clearTimeout(timer);
-  }, [currentStep]);
-
-  // Always append NEW bot message to conversation when step changes
-  useEffect(() => {
-    if (currentStep < chatSteps.length && !isTyping) {
+    const timer = setTimeout(() => {
+      setIsTyping(false);
       const step = chatSteps[currentStep];
       setConversation(prev => {
-        // Prevent duplicate if message already present at end
-        if (prev.length && prev[prev.length - 1].from === 'bot' && prev[prev.length - 1].text === step.message) {
+        if (
+          prev.length &&
+          prev[prev.length - 1].from === 'bot' &&
+          prev[prev.length - 1].text === step.message
+        ) {
           return prev;
         }
         return [...prev, { from: 'bot', text: step.message }];
       });
-    }
-    // Only run after typing finished
+    }, 1200);
+    return () => clearTimeout(timer);
+    // Only on step change
     // eslint-disable-next-line
-  }, [currentStep, isTyping]);
+  }, [currentStep]);
 
   // Auto-scroll to bottom when conversation or step updates
   useEffect(() => {
