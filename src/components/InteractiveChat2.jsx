@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
 
-const InteractiveChat = () => {
+const InteractiveChat2 = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isTyping, setIsTyping] = useState(true);
   const [userResponses, setUserResponses] = useState({});
   const [inputError, setInputError] = useState('');
+  const [conversation, setConversation] = useState([]);
+
+  // Ref for auto-scroll
+  const messagesEndRef = useRef(null);
 
   // Chat flow configuration
   const chatSteps = [
@@ -87,8 +91,39 @@ const InteractiveChat = () => {
     return () => clearTimeout(timer);
   }, [currentStep]);
 
+  // Always append NEW bot message to conversation when step changes
+  useEffect(() => {
+    if (currentStep < chatSteps.length && !isTyping) {
+      const step = chatSteps[currentStep];
+      setConversation(prev => {
+        // Prevent duplicate if message already present at end
+        if (prev.length && prev[prev.length - 1].from === 'bot' && prev[prev.length - 1].text === step.message) {
+          return prev;
+        }
+        return [...prev, { from: 'bot', text: step.message }];
+      });
+    }
+    // Only run after typing finished
+    // eslint-disable-next-line
+  }, [currentStep, isTyping]);
+
+  // Auto-scroll to bottom when conversation or step updates
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversation, currentStep]);
+
   // Handle responses
   const handleResponse = (value, stepType) => {
+    const step = chatSteps[currentStep];
+
+    // Save Q&A
+    if (stepType === 'question' || stepType === 'welcome' || stepType === 'message') {
+      setConversation(prev => [
+        ...prev,
+        { from: 'user', text: value }
+      ]);
+    }
+
     if (stepType === 'welcome' && value === 'start') {
       setCurrentStep(1);
       return;
@@ -102,23 +137,23 @@ const InteractiveChat = () => {
         return setCurrentStep(chatSteps.findIndex(s => s.type === 'failure'));
       }
       if (currentStep === 3 && value === 'undiagnosed') {
-        // Restart if "No official diagnosis"
         setUserResponses({});
         setInputError('');
+        setConversation([]);
         return setCurrentStep(0);
       }
       if (currentStep === 4 && value === 'already-lawyer') {
         return setCurrentStep(chatSteps.findIndex(s => s.type === 'failure'));
       }
       if (currentStep === 4 && value === 'no-lawyer') {
-        return setCurrentStep(5); // go to eligibility result
+        return setCurrentStep(5);
       }
 
       setCurrentStep(currentStep + 1);
     }
 
     if (stepType === 'message' && value === 'continue') {
-      setCurrentStep(6); // go to form
+      setCurrentStep(6);
     }
   };
 
@@ -235,6 +270,7 @@ const InteractiveChat = () => {
           onClick={() => {
             setCurrentStep(0);
             setUserResponses({});
+            setConversation([]);
             setInputError('');
           }}
         >
@@ -263,52 +299,48 @@ const InteractiveChat = () => {
       )}
 
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto pr-1 mb-4 space-y-4">
-        <AnimatePresence>
-          {currentStep < chatSteps.length && (
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="flex items-start"
-            >
-              <div className="w-10 h-10 flex items-center justify-center bg-blue-500 rounded-full mr-3 overflow-hidden">
-                <img
-                  src="/avtar.png"
-                  alt="icon"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div className="bg-gray-100 px-4 py-3 rounded-2xl rounded-tl-none shadow max-w-[80%]">
-                {isTyping ? (
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-400" />
-                  </div>
-                ) : (
-                  <p>{chatSteps[currentStep].message}</p>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {Object.entries(userResponses).map(([step, response]) => (
+      <div className="flex-1 overflow-y-auto pr-1 mb-4 space-y-4 scrollbar-hide">
+        {conversation.map((msg, index) => (
           <motion.div
-            key={step}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex justify-end"
+            key={index}
+            initial={{ opacity: 0, y: msg.from === 'bot' ? 20 : 0, x: msg.from === 'user' ? 20 : 0 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            className={`flex ${msg.from === 'bot' ? 'items-start' : 'justify-end'}`}
           >
-            <div className="bg-blue-100 px-4 py-3 rounded-2xl rounded-tr-none shadow max-w-[80%]">
-              {response}
+            {msg.from === 'bot' && (
+              <div className="w-10 h-10 flex items-center justify-center bg-blue-500 rounded-full mr-3 overflow-hidden">
+                <img src="/avtar.png" alt="icon" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <div
+              className={`px-4 py-3 rounded-2xl shadow max-w-[80%] ${
+                msg.from === 'bot'
+                  ? 'bg-gray-100 rounded-tl-none'
+                  : 'bg-blue-100 rounded-tr-none'
+              }`}
+            >
+              {msg.text}
             </div>
           </motion.div>
         ))}
+
+        {isTyping && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-start"
+          >
+            <div className="w-10 h-10 flex items-center justify-center bg-blue-500 rounded-full mr-3 overflow-hidden">
+              <img src="/avtar.png" alt="icon" className="w-full h-full object-cover" />
+            </div>
+            <div className="bg-gray-100 px-4 py-3 rounded-2xl shadow max-w-[80%]">
+              <p>Typing...</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Auto-scroll anchor */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Controls */}
@@ -317,4 +349,4 @@ const InteractiveChat = () => {
   );
 };
 
-export default InteractiveChat;
+export default InteractiveChat2;
